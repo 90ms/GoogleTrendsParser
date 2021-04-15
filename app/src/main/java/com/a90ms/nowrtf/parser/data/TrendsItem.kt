@@ -2,8 +2,8 @@ package com.a90ms.nowrtf.parser.data
 
 import java.io.Serializable
 
-data class Article(
-
+data class TrendsItem(
+    var rank: Int? = 0,
     var title: String? = null,
     var link: String? = null,
     var pubDate: String? = null,
@@ -14,7 +14,6 @@ data class Article(
     var sourceName: String? = null,
     var sourceUrl: String? = null,
     private var _news: MutableList<News> = mutableListOf(),
-
 ): Serializable {
 
     val news: MutableList<News>

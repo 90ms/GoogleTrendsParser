@@ -1,87 +1,92 @@
 package com.a90ms.nowrtf.ui
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.net.NetworkInfo
-import android.os.Build
 import android.os.Bundle
-import android.view.View
-import androidx.activity.viewModels
-import androidx.lifecycle.*
-import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
+import androidx.navigation.Navigation
 import com.a90ms.nowrtf.R
 import com.a90ms.nowrtf.databinding.ActivityMainBinding
-import com.a90ms.nowrtf.parser.Parser
+import com.a90ms.nowrtf.ui.base.BaseActivity
+import com.a90ms.nowrtf.util.gone
+import com.a90ms.nowrtf.util.isValidDestination
+import com.a90ms.nowrtf.util.show
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import dagger.hilt.android.AndroidEntryPoint
 
+
+@AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
-    private lateinit var adapter: ArticleAdapter
-    private lateinit var parser: Parser
 
-    private val mainViewModel by viewModels<MainViewModel>()
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setupData()
-        setupObserver()
     }
 
-    @SuppressLint("ResourceAsColor")
     private fun setupData() {
-        parser = Parser.Builder()
-            .context(this)
-            .cacheExpirationMillis(24L * 60L * 60L * 100L) //하루
-            .build()
-
-        binding.recyclerView.run {
-            itemAnimator = DefaultItemAnimator()
-            setHasFixedSize(true)
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment)
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            bottomNavigationChanged(destination.id)
         }
 
-        binding.swipLayout.run {
-            setColorSchemeColors(R.color.teal_700, R.color.purple_200)
-            canChildScrollUp()
-            setOnRefreshListener {
-                adapter.run {
-                    articles.clear()
-                    notifyDataSetChanged()
+        binding.bottomNav.setOnNavigationItemSelectedListener(onBottomNavigationListener)
+    }
+
+    private val onBottomNavigationListener =
+        BottomNavigationView.OnNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_setting -> {
+                    val navOptions =
+                        NavOptions.Builder().setPopUpTo(R.id.nav_host_fragment, true).build()
+                    if (isNotSameDestination(R.id.SettingFragment)) {
+                        Navigation.findNavController(this, R.id.nav_host_fragment)
+                            .navigate(R.id.SettingFragment, null, navOptions)
+                    }
+                    true
                 }
-                isRefreshing = true
-                mainViewModel.fetchFeed(parser)
+                else -> {
+                    if (isNotSameDestination(R.id.ListFragment)) {
+                        Navigation.findNavController(this, R.id.nav_host_fragment)
+                            .navigate(R.id.ListFragment)
+                    }
+                    true
+                }
             }
         }
 
-        if(isOnline()) mainViewModel.fetchFeed(parser)
-    }
-
-    private fun setupObserver() {
-        val owner = this
-        mainViewModel.run {
-            rssChannel.observe(owner) {channel ->
-                adapter = ArticleAdapter(channel.articles)
-                binding.recyclerView.adapter = adapter
-                adapter.notifyDataSetChanged()
-                binding.progressBar.visibility = View.GONE
-                binding.swipLayout.isRefreshing = false
+    private fun bottomNavigationChanged(destinationId: Int) {
+        when (destinationId) {
+            R.id.ListFragment -> {
+                binding.bottomNav.selectedItemId = R.id.nav_list
+                binding.bottomNav.show()
+            }
+            R.id.SettingFragment -> {
+                binding.bottomNav.selectedItemId = R.id.nav_setting
+                binding.bottomNav.show()
+            }
+            else -> {
+                binding.bottomNav.gone()
             }
         }
     }
 
-    @Suppress("DEPRECATION")
-    fun isOnline(): Boolean {
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
-            return when {
-                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                else -> false
+    private fun isNotSameDestination(destination: Int): Boolean {
+        return destination != Navigation.findNavController(this, R.id.nav_host_fragment)
+            .currentDestination?.id
+    }
+
+    override fun onBackPressed() {
+        when {
+            navController.isValidDestination(R.id.ListFragment) -> finish()
+            navController.isValidDestination(R.id.SettingFragment) -> {
+                val navOptions =
+                    NavOptions.Builder().setPopUpTo(R.id.nav_host_fragment, true).build()
+                Navigation.findNavController(this, R.id.nav_host_fragment)
+                    .navigate(R.id.ListFragment, null, navOptions)
             }
-        } else {
-            val activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
-            return activeNetworkInfo != null && activeNetworkInfo.isConnected
+            else -> super.onBackPressed()
         }
     }
 }

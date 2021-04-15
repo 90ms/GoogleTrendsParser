@@ -1,4 +1,4 @@
-package com.a90ms.nowrtf.ui
+package com.a90ms.nowrtf.ui.base
 
 import android.os.Bundle
 import androidx.annotation.LayoutRes

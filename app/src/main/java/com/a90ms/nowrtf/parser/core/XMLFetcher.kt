@@ -5,7 +5,7 @@ import okhttp3.Request
 import java.nio.charset.Charset
 import kotlin.jvm.Throws
 
-object CoreXMLFetcher {
+object XMLFetcher {
     @Throws(Exception::class)
     fun fetchXML(url: String, okHttpClient: OkHttpClient? = null, charset: Charset): String {
         var client = okHttpClient

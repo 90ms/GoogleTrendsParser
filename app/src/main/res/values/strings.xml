@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">NowRTF</string>
+
+    <string name="search_title">%s(을)를 검색하시겠어요?</string>
+    <string name="search_dismiss">닫기</string>
+    <string name="search_ok">검색</string>
+
+    <string name="menu_list">리스트</string>
+    <string name="menu_setting">설정</string>
+
+    <string name="setting_txt_theme">테마변경</string>
+    <string name="setting_txt_search">검색엔진변경</string>
+    <string name="setting_txt_search_description">해당 설정은 검색할 도메인을 변경하는 것 입니다.</string>
+
+<!--    ca-app-pub-5961501757112460/6377888043-->
+
 </resources>
